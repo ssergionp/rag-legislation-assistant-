@@ -51,12 +51,12 @@ public class ChatService {
 
     public ChatResponse answer(String question) {
         List<Document> relevantChunks = vectorStore.similaritySearch(
-                SearchRequest.query(question).withTopK(TOP_K));
+                SearchRequest.builder().query(question).topK(TOP_K).build());
 
         String context = relevantChunks.isEmpty()
                 ? "(no relevant documents found)"
                 : relevantChunks.stream()
-                    .map(Document::getContent)
+                    .map(Document::getText)
                     .reduce("", (a, b) -> a + "\n\n" + b);
 
         String systemPrompt = SYSTEM_TEMPLATE.formatted(context);
@@ -70,7 +70,7 @@ public class ChatService {
         List<ChatResponse.SourceExcerpt> sources = relevantChunks.stream()
                 .map(doc -> new ChatResponse.SourceExcerpt(
                         String.valueOf(doc.getMetadata().getOrDefault("source", "unknown")),
-                        truncate(doc.getContent(), 200)
+                        truncate(doc.getText(), 200)
                 ))
                 .toList();
 
